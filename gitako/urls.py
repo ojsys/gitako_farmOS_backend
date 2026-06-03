@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -10,7 +11,26 @@ admin.site.site_title = "Gitako Ops"
 admin.site.index_title = "Operations dashboard"
 admin.site.site_url = None  # hide the default "View site →" link
 
+
+def root(_request):
+    """Tiny index at / so the base URL is reachable (the API is under /api/).
+
+    Plain Django view (not DRF) so it needs no auth and never touches the DB —
+    a safe health check that works even before migrations run.
+    """
+    return JsonResponse(
+        {
+            "service": "Gitako Farm OS API",
+            "status": "ok",
+            "docs": "/api/schema/swagger-ui/",
+            "schema": "/api/schema/",
+            "admin": "/admin/",
+        }
+    )
+
+
 urlpatterns = [
+    path("", root, name="root"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/", include("apps.farms.urls")),

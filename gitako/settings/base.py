@@ -80,11 +80,13 @@ ASGI_APPLICATION = "gitako.asgi.application"
 
 # Plain PostgreSQL (no PostGIS) so the API runs on standard hosting. The engine
 # is pinned regardless of the URL scheme in DATABASE_URL.
+# The default is a LOCAL DEV placeholder only — real credentials come from the
+# DATABASE_URL env var (set in cPanel → Setup Python App). Never commit secrets.
 DATABASES = {
     "default": config(
         "DATABASE_URL",
-        default="postgres://gitakoco_dbuser:4*_(YZUPZr4vg(De@localhost:5432/gitakoco_db",
-        cast=dj_database_url.parse
+        default="postgres://gitako:gitako_dev@localhost:5432/gitako",
+        cast=dj_database_url.parse,
     )
 }
 DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
