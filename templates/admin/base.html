@@ -1,0 +1,134 @@
+{% load i18n static gitako_admin %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="{{ LANGUAGE_CODE|default:'en-us' }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}" data-admin-utc-offset="0">
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% block stylesheet %}{% static 'admin/css/base.css' %}{% endblock %}">
+  <link rel="stylesheet" href="{% static 'admin/css/gitako-admin.css' %}">
+  <link rel="stylesheet" href="{% static 'admin/css/gitako-shell.css' %}">
+  {% block dark-mode-vars %}{% endblock %}
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="robots" content="NONE,NOARCHIVE">
+  {% block extrastyle %}{% endblock %}
+  {% block extrahead %}{% endblock %}
+  {% block responsive %}{# Django's responsive.css fights our grid — we provide our own. #}{% endblock %}
+  {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
+</head>
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}"
+      data-admin-utc-offset="{% now 'Z' %}">
+
+{% if not is_popup and user.is_authenticated %}
+<div class="gk-shell">
+  <aside class="gk-sidebar">
+    <a href="{% url 'admin:index' %}" class="gk-brand">
+      <span class="gk-brand-dot"></span>
+      <span class="gk-brand-word">Gitako</span>
+      <span class="gk-brand-meta">Ops · v0.1</span>
+    </a>
+
+    <a href="{% url 'admin:index' %}" class="gk-nav-item {% if request.path == '/admin/' %}gk-nav-active{% endif %}">
+      <span class="gk-nav-icon">{% gitako_icon 'cursor' %}</span>
+      <span class="gk-nav-label">Dashboard</span>
+    </a>
+
+    {% gitako_app_list as apps %}
+    {% for app in apps %}
+      <div class="gk-nav-group">
+        <div class="gk-nav-group-title">
+          <span class="gk-nav-icon">{% gitako_app_icon app.app_label %}</span>
+          {{ app.name }}
+        </div>
+        {% for model in app.models %}
+          <a href="{{ model.admin_url|default:'#' }}"
+             class="gk-nav-item gk-nav-sub {% gitako_is_active model as active %}{% if active %}gk-nav-active{% endif %}">
+            <span class="gk-nav-icon">{% gitako_model_icon model %}</span>
+            <span class="gk-nav-label">{{ model.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div class="gk-sidebar-foot">
+      Gitako Farm OS · {% now "Y" %}<br>
+      <a href="/api/schema/swagger-ui/" target="_blank">API docs ↗</a>
+    </div>
+  </aside>
+
+  <div class="gk-main">
+    <header class="gk-topbar">
+      <div class="gk-topbar-left">
+        {% block pretitle %}{% endblock %}
+        {% if not is_popup %}
+          <nav class="gk-breadcrumbs" aria-label="breadcrumbs">
+            {% block breadcrumbs %}
+              <a href="{% url 'admin:index' %}">Home</a>
+            {% endblock %}
+          </nav>
+        {% endif %}
+      </div>
+      <div class="gk-topbar-right">
+        {% if user.is_authenticated %}
+          <div class="gk-user-chip">
+            <span class="gk-user-avatar">{{ user.phone|slice:'-2:' }}</span>
+            <div class="gk-user-meta">
+              <div class="gk-user-name">{{ user.full_name|default:user.phone }}</div>
+              <div class="gk-user-sub">
+                {% if user.is_superuser %}Superuser{% else %}Staff{% endif %}
+              </div>
+            </div>
+            <a href="{% url 'admin:logout' %}" class="gk-logout" title="Sign out">→]</a>
+          </div>
+        {% endif %}
+      </div>
+    </header>
+
+    {% if messages %}
+      <ul class="gk-messages">
+        {% for m in messages %}
+          <li class="gk-message gk-message-{{ m.tags|default:'info' }}">{{ m|capfirst }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <main class="gk-content">
+      {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+      {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+      <div id="content" class="{% block coltype %}colM{% endblock %}">
+        {% block content %}
+          {% block object-tools %}{% endblock %}
+          {{ content }}
+        {% endblock %}
+      </div>
+      {% block footer %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+  {# popup OR not signed in — minimal chrome (used for the login page too) #}
+  {% if messages %}
+    <ul class="gk-messages">
+      {% for m in messages %}
+        <li class="gk-message gk-message-{{ m.tags|default:'info' }}">{{ m|capfirst }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if not is_popup %}
+    {# Branded login header for the un-authenticated screens #}
+    <div class="gk-login-header">
+      <span class="gk-brand-dot"></span>
+      <span class="gk-brand-word">Gitako</span>
+      <span class="gk-brand-meta">Operations</span>
+    </div>
+  {% endif %}
+  <div id="content" class="{% block popup_coltype %}colM{% endblock %}">
+    {% block popup_pretitle %}{% endblock %}
+    {% block popup_content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+    {% block popup_content %}
+      {{ content }}
+    {% endblock %}
+  </div>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+{% load gitako_admin %}
+
+{% block bodyclass %}dashboard{% endblock %}
+{% block title %}Operations dashboard · Gitako Ops{% endblock %}
+{# base.html renders an <h1> from {{ title }} in content_title; we own our own H1 inside `content`. #}
+{% block content_title %}{% endblock %}
+{% block content_subtitle %}{% endblock %}
+
+{% block content %}
+  <h1>Operations dashboard</h1>
+  <h2>Live snapshot of farms, enterprises, and the sync pipe.</h2>
+
+  {% if gitako_kpis %}
+    <div class="gitako-kpis">
+      {% for kpi in gitako_kpis %}
+        <div class="gitako-kpi">
+          <div class="label">{{ kpi.label }}</div>
+          <div class="value">{{ kpi.value }}</div>
+          <div class="hint">{{ kpi.hint }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="gk-dash-grid">
+    <section class="gk-card gk-col-span-2">
+      <header class="gk-card-head">
+        <div>
+          <h3>Farms</h3>
+          <p>Live farms in your scope</p>
+        </div>
+        <a class="gk-card-link" href="{% url 'admin:farms_farm_changelist' %}">View all →</a>
+      </header>
+      {% if gitako_recent_farms %}
+        <table class="gk-table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Region</th><th>Owner</th><th class="num">Staff</th><th class="num">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in gitako_recent_farms %}
+              <tr>
+                <td><a class="gk-link" href="{% url 'admin:farms_farm_change' f.id %}">{{ f.name }}</a></td>
+                <td>{{ f.region|default:"—" }}</td>
+                <td>{{ f.owner_label }}</td>
+                <td class="num">{{ f.staff_count }}</td>
+                <td class="num">{{ f.created_at|date:"M d" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="gk-empty">
+          No farms yet. <a class="gk-link" href="{% url 'admin:farms_farm_add' %}">Add one →</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="gk-card">
+      <header class="gk-card-head">
+        <div>
+          <h3>Awaiting approval</h3>
+          <p>Activities pending a reviewer</p>
+        </div>
+        <a class="gk-card-link" href="{% url 'admin:activities_activity_changelist' %}?approved_at__isnull=True">View all →</a>
+      </header>
+      {% if gitako_pending_activities %}
+        <ul class="gk-stream">
+          {% for a in gitako_pending_activities %}
+            <li class="gk-stream-item">
+              <span class="gk-stream-dot gk-stream-dot-warn"></span>
+              <div class="gk-stream-body">
+                <a class="gk-link" href="{% url 'admin:activities_activity_change' a.id %}">{{ a.type_label }}</a>
+                <span class="gk-stream-meta">{{ a.enterprise_name }} · {{ a.actor_label }}</span>
+              </div>
+              <div class="gk-stream-time">{{ a.occurred_at|timesince }} ago</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="gk-empty">Nothing pending. Nice.</div>
+      {% endif %}
+    </section>
+
+    <section class="gk-card">
+      <header class="gk-card-head">
+        <div>
+          <h3>Recent sync ops</h3>
+          <p>Latest changes across all tenants</p>
+        </div>
+        <a class="gk-card-link" href="{% url 'admin:sync_changelog_changelist' %}">View all →</a>
+      </header>
+      {% if gitako_recent_changes %}
+        <ul class="gk-stream">
+          {% for c in gitako_recent_changes %}
+            <li class="gk-stream-item">
+              <span class="gk-stream-dot gk-stream-dot-{{ c.op }}"></span>
+              <div class="gk-stream-body">
+                <span class="gk-op-tag gk-op-{{ c.op }}">{{ c.op }}</span>
+                <span class="gk-stream-meta">{{ c.table }} · {{ c.row_short }}</span>
+              </div>
+              <div class="gk-stream-time">{{ c.at|timesince }} ago</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="gk-empty">No sync activity in the last day.</div>
+      {% endif %}
+    </section>
+
+    <section class="gk-card">
+      <header class="gk-card-head">
+        <div>
+          <h3>Quick actions</h3>
+          <p>Common ops tasks</p>
+        </div>
+      </header>
+      <div class="gk-quick-grid">
+        <a class="gk-quick" href="{% url 'admin:farms_farm_add' %}">
+          <span class="gk-quick-icon">{% gitako_icon 'layers' %}</span>
+          <span class="gk-quick-label">New farm</span>
+        </a>
+        <a class="gk-quick" href="{% url 'admin:accounts_user_add' %}">
+          <span class="gk-quick-icon">{% gitako_icon 'person' %}</span>
+          <span class="gk-quick-label">New user</span>
+        </a>
+        <a class="gk-quick" href="{% url 'admin:enterprises_enterprise_add' %}">
+          <span class="gk-quick-icon">{% gitako_icon 'eco' %}</span>
+          <span class="gk-quick-label">New enterprise</span>
+        </a>
+        <a class="gk-quick" href="/api/schema/swagger-ui/" target="_blank">
+          <span class="gk-quick-icon">{% gitako_icon 'note' %}</span>
+          <span class="gk-quick-label">API docs ↗</span>
+        </a>
+      </div>
+    </section>
+  </div>
+{% endblock %}
