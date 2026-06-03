@@ -151,14 +151,19 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
 
-# Email — console in dev, SMTP in prod (set EMAIL_BACKEND + EMAIL_HOST etc.).
+# Email — console in dev, SMTP in prod. Set EMAIL_* env vars (e.g. Brevo) to
+# switch on real delivery. Secrets (EMAIL_HOST_PASSWORD) live only in env, never
+# in code. The From address must be a sender/domain verified in your provider.
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = config("EMAIL_HOST", default="")
 EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
-DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Gitako <no-reply@gitako.farm>")
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
+# Don't let a slow/stuck SMTP server hang the OTP request (mobile times out ~30s).
+EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Gitako <no-reply@gitako.com>")
 
 # Celery
 CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
