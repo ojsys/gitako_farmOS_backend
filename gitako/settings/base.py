@@ -2,19 +2,14 @@
 from datetime import timedelta
 from pathlib import Path
 
-import environ
+import dj_database_url
+from decouple import Csv, config
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-env = environ.Env(
-    DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, []),
-)
-
-SECRET_KEY = env("SECRET_KEY", default="insecure-default-change-me")
-DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+SECRET_KEY = config("SECRET_KEY", default="insecure-default-change-me")
+DEBUG = config("DEBUG", default=False, cast=bool)
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="", cast=Csv())
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -85,7 +80,13 @@ ASGI_APPLICATION = "gitako.asgi.application"
 
 # Plain PostgreSQL (no PostGIS) so the API runs on standard hosting. The engine
 # is pinned regardless of the URL scheme in DATABASE_URL.
-DATABASES = {"default": env.db("DATABASE_URL", default="postgres://gitakoco_dbuser:4*_(YZUPZr4vg(De@localhost:5432/gitakoco_db")}
+DATABASES = {
+    "default": config(
+        "DATABASE_URL",
+        default="postgres://gitakoco_dbuser:4*_(YZUPZr4vg(De@localhost:5432/gitakoco_db",
+        cast=dj_database_url.parse
+    )
+}
 DATABASES["default"]["ENGINE"] = "django.db.backends.postgresql"
 
 AUTH_USER_MODEL = "accounts.User"
@@ -145,21 +146,21 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
-CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
 CORS_ALLOW_CREDENTIALS = True
 
 # Email — console in dev, SMTP in prod (set EMAIL_BACKEND + EMAIL_HOST etc.).
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = env("EMAIL_HOST", default="")
-EMAIL_PORT = env.int("EMAIL_PORT", default=587)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Gitako <no-reply@gitako.farm>")
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Gitako <no-reply@gitako.farm>")
 
 # Celery
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = config("REDIS_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = config("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
@@ -168,23 +169,23 @@ GITAKO = {
     "OTP_LENGTH": 6,
     "OTP_TTL_SECONDS": 5 * 60,
     "OTP_RATE_LIMIT_PER_HOUR": 5,
-    "SMS_PROVIDER": env("SMS_PROVIDER", default="console"),
-    "TERMII_API_KEY": env("TERMII_API_KEY", default=""),
-    "TERMII_SENDER_ID": env("TERMII_SENDER_ID", default="Gitako"),
+    "SMS_PROVIDER": config("SMS_PROVIDER", default="console"),
+    "TERMII_API_KEY": config("TERMII_API_KEY", default=""),
+    "TERMII_SENDER_ID": config("TERMII_SENDER_ID", default="Gitako"),
     # AI co-pilot (M12). "stub" is a deterministic, no-key provider; "claude"
     # uses the Anthropic API and needs ANTHROPIC_API_KEY. Mirrors the SMS seam.
-    "LLM_PROVIDER": env("LLM_PROVIDER", default="stub"),
-    "ANTHROPIC_API_KEY": env("ANTHROPIC_API_KEY", default=""),
-    "ANTHROPIC_MODEL": env("ANTHROPIC_MODEL", default="claude-opus-4-8"),
+    "LLM_PROVIDER": config("LLM_PROVIDER", default="stub"),
+    "ANTHROPIC_API_KEY": config("ANTHROPIC_API_KEY", default=""),
+    "ANTHROPIC_MODEL": config("ANTHROPIC_MODEL", default="claude-opus-4-8"),
     # Payments (M17 escrow + M18 disbursement). "stub" moves no real money;
     # "paystack" uses the live API. Mirrors the other provider seams.
-    "PAYMENT_PROVIDER": env("PAYMENT_PROVIDER", default="stub"),
-    "PAYSTACK_SECRET_KEY": env("PAYSTACK_SECRET_KEY", default=""),
-    "S3_ENDPOINT_URL": env("S3_ENDPOINT_URL", default=""),
-    "S3_ACCESS_KEY": env("S3_ACCESS_KEY", default=""),
-    "S3_SECRET_KEY": env("S3_SECRET_KEY", default=""),
-    "S3_BUCKET": env("S3_BUCKET", default="gitako-dev"),
-    "S3_REGION": env("S3_REGION", default="fra1"),
+    "PAYMENT_PROVIDER": config("PAYMENT_PROVIDER", default="stub"),
+    "PAYSTACK_SECRET_KEY": config("PAYSTACK_SECRET_KEY", default=""),
+    "S3_ENDPOINT_URL": config("S3_ENDPOINT_URL", default=""),
+    "S3_ACCESS_KEY": config("S3_ACCESS_KEY", default=""),
+    "S3_SECRET_KEY": config("S3_SECRET_KEY", default=""),
+    "S3_BUCKET": config("S3_BUCKET", default="gitako-dev"),
+    "S3_REGION": config("S3_REGION", default="fra1"),
 }
 
 # Logging — plain stdlib for now. Switch to structlog ProcessorFormatter when
