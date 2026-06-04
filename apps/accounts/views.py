@@ -25,7 +25,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .email import send_email_otp
+from .email import send_email_otp, send_welcome_email
 from .models import OtpCode, User
 from .serializers import (
     MeSerializer,
@@ -119,6 +119,11 @@ class OtpVerifyView(APIView):
                                 status=status.HTTP_403_FORBIDDEN)
             user.last_login = timezone.now()
             user.save(update_fields=["last_login"])
+
+        # First-ever sign-in for an email account → welcome them. Best-effort:
+        # never let a mail failure break the sign-up response.
+        if created and user.email:
+            send_welcome_email(email=user.email, name=user.full_name or "")
 
         refresh = RefreshToken.for_user(user)
         return Response(TokenPairSerializer({

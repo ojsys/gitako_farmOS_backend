@@ -87,9 +87,13 @@ def test_email_otp_verify_creates_user(api_client, mailoutbox):
     assert resp.status_code == 200, resp.content
     assert resp.json()["is_new_user"] is True
     assert User.objects.filter(email__iexact="musa@example.com").exists()
-    # A real email was dispatched via Django's mail backend.
-    assert len(mailoutbox) == 1
+    # Two emails go out: the OTP code (on request) and, since this is the
+    # account's first sign-in, a welcome email (on verify).
+    assert len(mailoutbox) == 2
     assert otp.code in mailoutbox[0].body
+    welcome = mailoutbox[1]
+    assert "Welcome" in welcome.subject
+    assert welcome.to == ["musa@example.com"]
 
 
 def test_otp_request_requires_exactly_one_identifier(api_client):

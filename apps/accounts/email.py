@@ -1,30 +1,56 @@
 """Email OTP delivery.
 
-Uses Django's email backend, which in dev is `django.core.mail.backends.console`
-(prints messages to docker logs). Production switches via DJANGO_EMAIL_BACKEND
-+ SMTP creds in settings.
+Goes through the shared branded mailer (HTML + text). In dev the backend is
+`console` (prints to logs); production switches to SMTP via env (see settings).
 """
 from __future__ import annotations
 
 import logging
 
-from django.core.mail import send_mail
+from gitako.mailer import send_branded_email
 
 log = logging.getLogger("gitako.email")
 
 
 def send_email_otp(*, email: str, code: str) -> None:
-    subject = "Your Gitako code"
-    body = (
-        f"Your Gitako code is {code}.\n"
-        f"It expires in 5 minutes.\n\n"
-        f"If you didn't request this, you can ignore this email."
-    )
-    send_mail(
-        subject=subject,
-        message=body,
-        from_email=None,  # uses DEFAULT_FROM_EMAIL
-        recipient_list=[email],
-        fail_silently=False,
+    """Email verification code (sign-up + sign-in use the same one-time code)."""
+    send_branded_email(
+        to=email,
+        subject="Your Gitako verification code",
+        heading="Verify your email",
+        paragraphs=[
+            "Enter the code below in the Gitako app to verify your email and "
+            "finish signing in.",
+        ],
+        code=code,
+        code_note="This code expires in 5 minutes.",
+        footer_note="Didn’t request this? You can safely ignore this email — "
+        "no changes will be made to your account.",
+        preheader=f"Your Gitako verification code is {code}",
     )
     log.info("Email OTP %s sent to %s", code, email)
+
+
+def send_welcome_email(*, email: str, name: str = "") -> None:
+    """One-time welcome sent when a new account is created. Best-effort — it must
+    never block sign-up, so failures are swallowed."""
+    greeting = f"Welcome to Gitako, {name}!" if name else "Welcome to Gitako!"
+    send_branded_email(
+        to=email,
+        subject="Welcome to Gitako 🌿",
+        heading=greeting,
+        paragraphs=[
+            "Your account is ready — thanks for joining!",
+            "Gitako helps you run your whole farm from one place: record what "
+            "happens by voice, get an automatic GAP work calendar, track money "
+            "and profit, and see how each season really performed.",
+            "Open the app to set up your first farm, or manage everything from "
+            "the web dashboard.",
+        ],
+        cta_label="Open the web dashboard",
+        cta_url="https://app.gitako.com",
+        footer_note="Need a hand getting started? Just reply to this email.",
+        preheader="Your Gitako account is ready — here's how to get started.",
+        fail_silently=True,
+    )
+    log.info("Welcome email sent to %s", email)

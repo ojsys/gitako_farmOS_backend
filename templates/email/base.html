@@ -1,0 +1,109 @@
+{% autoescape on %}<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{{ subject }}</title>
+  <style>
+    /* Dark-mode-friendly + mobile tweaks (most styles are inline for clients). */
+    @media only screen and (max-width:600px){
+      .container{width:100%!important}
+      .px{padding-left:24px!important;padding-right:24px!important}
+      .code{font-size:30px!important;letter-spacing:8px!important}
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#F6F2E9;">
+  <!-- preheader (hidden preview text) -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#F6F2E9;font-size:1px;line-height:1px;">
+    {{ preheader }}
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F2E9;">
+    <tr>
+      <td align="center" style="padding:28px 12px;">
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0"
+               style="width:600px;max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;
+                      box-shadow:0 6px 24px rgba(15,61,36,.08);font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:#1F5A38;background:linear-gradient(135deg,#1F5A38,#2C7A4B);padding:22px 32px;">
+              <span style="color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-.3px;">Gitako</span>
+              <span style="color:#bfe0cd;font-size:13px;margin-left:8px;">Farm OS</span>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td class="px" style="padding:34px 40px 8px 40px;">
+              <h1 style="margin:0 0 14px 0;font-size:22px;line-height:1.25;color:#14241B;font-weight:800;">
+                {{ heading }}
+              </h1>
+              {% for p in paragraphs %}
+              <p style="margin:0 0 14px 0;font-size:15px;line-height:1.6;color:#5A6760;">{{ p }}</p>
+              {% endfor %}
+            </td>
+          </tr>
+
+          {% if code %}
+          <!-- Code block -->
+          <tr>
+            <td class="px" style="padding:6px 40px 8px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="background:#E6F1EA;border:1px solid #cfe6d8;border-radius:12px;padding:22px 12px;">
+                    <div class="code" style="font-family:'Courier New',monospace;font-size:38px;font-weight:700;
+                                letter-spacing:12px;color:#1F5A38;">{{ code }}</div>
+                    {% if code_note %}
+                    <div style="margin-top:8px;font-size:12px;color:#5A6760;">{{ code_note }}</div>
+                    {% endif %}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if cta_label and cta_url %}
+          <!-- CTA button -->
+          <tr>
+            <td class="px" align="center" style="padding:14px 40px 6px 40px;">
+              <a href="{{ cta_url }}"
+                 style="display:inline-block;background:#1F5A38;color:#ffffff;text-decoration:none;
+                        font-size:15px;font-weight:700;padding:13px 28px;border-radius:999px;">{{ cta_label }}</a>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% if footer_note %}
+          <tr>
+            <td class="px" style="padding:14px 40px 4px 40px;">
+              <p style="margin:0;font-size:13px;line-height:1.6;color:#8a958e;">{{ footer_note }}</p>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- divider -->
+          <tr><td style="padding:24px 40px 0 40px;"><div style="height:1px;background:#E3DCCB;"></div></td></tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="px" style="padding:18px 40px 30px 40px;">
+              <p style="margin:0 0 4px 0;font-size:12px;line-height:1.6;color:#8a958e;">
+                Gitako — the operating system for African farms.
+              </p>
+              <p style="margin:0;font-size:12px;line-height:1.6;color:#a7b0aa;">
+                © {{ year }} Gitako Farm OS ·
+                <a href="{{ site_url }}" style="color:#2C7A4B;text-decoration:none;">{{ site_url_label }}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>{% endautoescape %}
